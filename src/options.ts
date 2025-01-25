@@ -30,6 +30,7 @@ const sampleConfig = `[
     "env": [
       {
         "account": "222222222222",
+        "role": "PowerUser", // role is optional property
         "region": "us-east-1" // region is optional property
       },
       {
