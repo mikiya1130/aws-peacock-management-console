@@ -10,7 +10,7 @@ import {
   Environment,
 } from './lib/config-repository'
 import { RepositoryProps } from './lib/repository'
-import { patchAccountNameIfAwsSso, selectElement } from './lib/util'
+import { patchAccountNameIfAwsSso, selectElement, getAccountMenuButtonSpan } from './lib/util'
 
 const AWS_SQUID_INK = '#232f3e'
 const AWSUI_COLOR_GRAY_300 = '#d5dbdb'
@@ -70,6 +70,15 @@ const getAccountId = async (): Promise<string | null | undefined> => {
   }
 }
 
+const getAccountRole = async (): Promise<string | null | undefined> => {
+  try {
+    return getAccountMenuButtonSpan()?.innerText.split("/")[0]
+  } catch (e) {
+    console.error(e)
+    return null
+  }
+}
+
 const getRegion = () => {
   return document.getElementById('awsc-mezz-region')?.getAttribute('content')
 }
@@ -91,19 +100,20 @@ const parseConfigList = (configList: string) => {
   }
 }
 
-const isEnvMatch = (env: Environment, accountId: string, region: string) =>
-  String(env.account) === accountId && (env.region ? env.region === region : true)
+const isEnvMatch = (env: Environment, accountId: string, accountRole: string, region: string) =>
+  String(env.account) === accountId && (env.role ? env.role === accountRole : true) && (env.region ? env.region === region : true)
 
 const findConfig = (
   configList: ConfigList,
   accountId: string,
+  accountRole: string,
   region: string
 ): Config | undefined =>
   configList.find((config: Config) => {
     if (Array.isArray(config.env)) {
-      return config.env.some((e) => isEnvMatch(e, accountId, region))
+      return config.env.some((e) => isEnvMatch(e, accountId, accountRole, region))
     } else {
-      return isEnvMatch(config.env, accountId, region)
+      return isEnvMatch(config.env, accountId, accountRole, region)
     }
   })
 
@@ -300,9 +310,10 @@ const run = async () => {
   const accounts = await accountsRepository.getAccounts()
   const configList = await loadConfigList()
   const accountId = await getAccountId()
+  const accountRole = await getAccountRole()
   const region = getRegion()
-  if (configList && accountId && region) {
-    const config = findConfig(configList, accountId, region)
+  if (configList && accountId && accountRole && region) {
+    const config = findConfig(configList, accountId, accountRole, region)
     if (config?.style) {
       updateStyle(config?.style)
     }

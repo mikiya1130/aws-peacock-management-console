@@ -2,6 +2,7 @@ import { Repository, RepositoryProps } from './repository'
 
 export type Environment = {
   account: string
+  role?: string
   region?: string
 }
 export type Config = {
